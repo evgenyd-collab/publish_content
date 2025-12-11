@@ -552,7 +552,7 @@ def generate_and_publish_for_site(
 
     # Жёстко задаём ЧПУ из темы (а не из модели)
     article["slug"] = generate_slug_from_topic(topic)
-print(f"[DEBUG] Принудительный ЧПУ: {article['slug']}")
+    print(f"[DEBUG] Принудительный ЧПУ: {article['slug']}")
 
     word_count = len(str(article["content_html"]).split())
     print(f"[DEBUG] Итоговый объём текста: {word_count} слов")
