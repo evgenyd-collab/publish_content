@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* Default Light Theme Variables */
+  --background-color: #ffffff;
+  --text-color: #213547;
+  --button-background-color: #f9f9f9;
+  --button-hover-border-color: #747bff;
+  --link-color: #646cff;
+  --link-hover-color: #747bff;
+
+  color-scheme: light dark;
+  color: var(--text-color);
+  background-color: var(--background-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark Theme Variables */
+.dark-theme {
+  /* ---- DARK THEME PALETTE ---- */
+  /* surfaces & backgrounds */
+  --background-color: #121212; /* page background */
+  --surface-color: #1e1e1e; /* cards / modals */
+  --button-background-color: #1f1f1f; /* buttons / inputs */
+
+  /* text */
+  --text-color: #e4e8eb; /* primary */
+  --text-secondary-color: #a0a7b1; /* secondary */
+  --text-placeholder-color: #6b6f77; /* placeholders */
+
+  /* borders */
+  --border-color: #30343e; /* passive borders */
+  --border-accent-color: #4da6ff; /* focus / active */
+  --button-hover-border-color: var(--border-accent-color);
+
+  /* links */
+  --link-color: #4da6ff;
+  --link-hover-color: #6eb8ff;
+  --link-visited-color: #8aa5ff;
+
+  /* toggles */
+  --toggle-track-color: #30343e;
+  --toggle-active-track-color: #4da6ff;
+  --toggle-thumb-color: #e4e8eb;
+
+  /* semantic */
+  --danger-color: #ff6b6b;
+  --warning-color: #f7b955;
+  --success-color: #43d48d;
+}
+
+/* Override Tailwind backgrounds under dark theme */
+.dark-theme .bg-white,
+.dark-theme .bg-gray-50,
+.dark-theme .bg-gray-100,
+.dark-theme .bg-gray-200 {
+  background-color: var(--surface-color) !important;
+}
+
+/* Override border colors under dark theme */
+.dark-theme .border,
+.dark-theme .border-b,
+.dark-theme .border-t {
+  border-color: var(--border-color) !important;
+}
+
+/* Override gray text colors under dark theme */
+.dark-theme .text-gray-100,
+.dark-theme .text-gray-200,
+.dark-theme .text-gray-300,
+.dark-theme .text-gray-400,
+.dark-theme .text-gray-500,
+.dark-theme .text-gray-600,
+.dark-theme .text-gray-700,
+.dark-theme .text-gray-800,
+.dark-theme .text-gray-900 {
+  color: var(--text-color) !important;
+}
+
+/* Override explicit text-white to adapt to dark theme background */
+.dark-theme .text-white {
+  color: var(--text-color) !important;
+}
+
+/* Override links and blue texts */
+.dark-theme .text-blue-500,
+.dark-theme a {
+  color: var(--link-color) !important;
+}
+.dark-theme a:hover,
+.dark-theme .text-blue-500:hover {
+  color: var(--link-hover-color) !important;
+}
+
+/* Override inputs, selects, textareas under dark theme */
+.dark-theme input,
+.dark-theme select,
+.dark-theme textarea {
+  background-color: var(--button-background-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Override placeholder text */
+.dark-theme ::placeholder {
+  color: var(--text-placeholder-color) !important;
+}
+
+/* Optional: scrollbar styling under dark theme */
+.dark-theme ::-webkit-scrollbar {
+  background-color: var(--background-color);
+}
+.dark-theme ::-webkit-scrollbar-thumb {
+  background-color: var(--text-color);
+}
+
+/* Override hover:bg-gray-50 under dark theme */
+.dark-theme .hover\:bg-gray-50:hover {
+  background-color: var(--button-background-color) !important;
+}
+
+/* Override light blue backgrounds under dark theme */
+.dark-theme .bg-blue-50 {
+  background-color: var(--button-background-color) !important;
+}
+/* Override hover:bg-blue-100 under dark theme */
+.dark-theme .hover\:bg-blue-100:hover {
+  background-color: var(--button-background-color) !important;
+}
+
+/* Override light teal backgrounds under dark theme */
+.dark-theme .bg-teal-50,
+.dark-theme .bg-teal-100 {
+  background-color: var(--surface-color) !important;
+}
+/* Override hover:bg-teal-100 under dark theme */
+.dark-theme .hover\:bg-teal-100:hover {
+  background-color: var(--surface-color) !important;
+}
+
+#root {
+  width: 100%;
+  box-sizing: border-box !important;  
+  padding: 1rem 0 1rem 1rem;
+  margin-right: calc(-1 * (100vw - 100%));
+}
+
+a {
+  font-weight: 500;
+  color: var(--link-color);
+  text-decoration: inherit;
+}
+a:hover {
+  color: var(--link-hover-color);
+}
+
+html {
+  width: 100%;
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  max-width: 100%;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  width: 99%;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--button-background-color);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: var(--button-hover-border-color);
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* visited & focus states */
+.dark-theme a:visited {
+  color: var(--link-visited-color) !important;
+}
+.dark-theme a:focus,
+.dark-theme a:focus-visible {
+  outline: 2px solid var(--border-accent-color);
+  outline-offset: 2px;
+}
+
+/* Если где-то в компонентах был установлен overflow-y: scroll/auto для крупных контейнеров, убрать или заменить на overflow-visible */

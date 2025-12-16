@@ -1,11 +1,11 @@
 SITES_CONFIG = { 
 
     "gapola": {
-        "wp_url": "https://gapola.net",  # можно использовать hosts -> 46.62.229.237 bricker-project.com
-        "username": "654fe3",
-        "app_password": "QiTO j93l Zyh9 kQrB bnn3 ipVt",
+        "wp_url": "https://mziorb.ru/",  # можно использовать hosts -> 46.62.229.237 bricker-project.com
+        "username": "mziorb_ru",
+        "app_password": "x3BG lhrg Vjhj Oha2 ZlPO ZdOY",
         "prompt_profile": "default",
-        "seo_plugin": "rankmath",
+        # seo_plugin удалено - определяется автоматически при публикации
         "default_category_id": 1,
     },
 }
