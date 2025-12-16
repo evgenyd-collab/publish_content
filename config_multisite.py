@@ -5,7 +5,7 @@ SITES_CONFIG = {
         "username": "mziorb_ru",
         "app_password": "x3BG lhrg Vjhj Oha2 ZlPO ZdOY",
         "prompt_profile": "default",
-        "seo_plugin": "rankmath",
+        # seo_plugin удалено - определяется автоматически при публикации
         "default_category_id": 1,
     },
 }

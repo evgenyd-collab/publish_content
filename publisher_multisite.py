@@ -33,6 +33,43 @@ from openai import OpenAI
 
 from config_multisite import SITES_CONFIG
 
+# Импортируем функцию определения SEO плагина
+try:
+    from detect_seo_plugin import detect_seo_plugin
+except ImportError:
+    # Если файл не найден, создаём простую функцию-заглушку
+    def detect_seo_plugin(site_key: str) -> str:
+        """Определяет SEO плагин, возвращает 'rankmath', 'yoast', 'both' или 'none'"""
+        # Пытаемся определить через REST API
+        try:
+            import requests
+            cfg = SITES_CONFIG[site_key]
+            wp_url = cfg["wp_url"].rstrip("/")
+            username = cfg["username"]
+            app_password = cfg["app_password"]
+            
+            plugins_endpoint = f"{wp_url}/wp-json/wp/v2/plugins"
+            resp = requests.get(plugins_endpoint, auth=(username, app_password), timeout=10)
+            
+            if resp.status_code == 200:
+                plugins = resp.json()
+                plugin_slugs = [p.get("plugin", "") for p in plugins if p.get("status") == "active"]
+                
+                has_rankmath = any("rank-math" in slug.lower() or "seo-by-rank-math" in slug.lower() for slug in plugin_slugs)
+                has_yoast = any("yoast" in slug.lower() or "wordpress-seo" in slug.lower() for slug in plugin_slugs)
+                
+                if has_rankmath and has_yoast:
+                    return "both"
+                elif has_rankmath:
+                    return "rankmath"
+                elif has_yoast:
+                    return "yoast"
+            
+            return "none"
+        except Exception as e:
+            print(f"[WARN] Не удалось определить SEO плагин: {e}")
+            return "none"
+
 
 # =========================
 #   ИНИЦИАЛИЗАЦИЯ OpenAI
@@ -51,167 +88,17 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 #   PROMPT ШАБЛОН
 # =========================
 
-BASE_PROMPT_TEMPLATE = """
-Напиши экспертную SEO-оптимизированную статью по теме:
-[УКАЖИ ТЕМУ]
+def load_prompt_template() -> str:
+    """Загружает промпт из файла prompt_template.txt"""
+    prompt_file = "prompt_template.txt"
+    if not os.path.exists(prompt_file):
+        raise FileNotFoundError(f"Файл с промптом не найден: {prompt_file}")
+    
+    with open(prompt_file, encoding="utf-8") as f:
+        return f.read()
 
-Ты — журналист и редактор уровня Спорт-Экспресс, Чемпионат.com, Sports.ru, с большим практическим опытом в спорте, ставках и онлайн-казино. Ты пишешь как живой человек, а не как нейросеть, не как научный работник и не как банковский аналитик.
 
-1. Объём и базовые ограничения
-
-Объём статьи: 1000–1500 слов.
-Если текст получается короче 1000 слов — ОБЯЗАТЕЛЬНО расширь каждый смысловой блок,
-добавь примеры, цифры, детали и практические рекомендации, пока объём не превысит 1000 слов.
-
-Это полноценная развернутая SEO-статья, а не краткая справка.
-
-Текст должен:
-— глубоко раскрывать тему,
-— включать несколько смысловых уровней,
-— содержать примеры, цифры, детали,
-— не быть сжатым или обзорным.
-
-Запрещено использовать:
-линии-разделители
-эмодзи
-формальные нейросетевые шаблоны
-пафос, восхваление, абстрактные рассуждения
-рекламный тон
-
-2. SEO-требования (обязательно)
-
-Используй ключевые слова из кластера и LSI-термины естественно, без переспама.
-В конце статьи обязательно добавь:
-✅ Meta Title до 70 символов.
-Ключевая фраза — максимально близко к началу. Должен быть кликабельным, а не формальным.
-Не указывай количество символов в ответе.
-
-✅ Meta Description до 160 символов.
-Должен привлекать пользователя, а не быть техническим. Запрещены любые вводные формулы, в том числе:
-«Узнайте…», «На нашем сайте…», «Мы расскажем…» и любые аналоги на других языках.
-Не указывай количество символов в ответе.
-
-3. Структура статьи (строго соблюдать)
-
-H1 — Заголовок статьи.
-Введение без подзаголовка:
-— короткое, цепляющее, живое;
-— сразу объясняет значимость темы.
-
-Основные разделы с H2:
-— каждый H2 — отдельный смысловой блок;
-— внутри допускаются H3. Если блок H3 состоит из одного предложения, лучше сделать в форме списка;
-— запрещено ставить H3 сразу после H2: между ними обязательно должен быть переходный абзац.
-
-Финальный смысловой блок (без слов «Заключение», «Финальный смысловой блок» или схожих):
-— заголовок должен соотноситься с темой;
-— логично завершает тему;
-— содержит выводы и практические рекомендации.
-
-4. Таблицы и списки
-
-В тексте:
-— минимум 1 таблица;
-— минимум 1 список.
-
-Можно больше, только если это оправдано по смыслу.
-Таблицы и списки должны усиливать материал, а не быть формальностью.
-
-5. Содержание (усиленные требования)
-
-Обязательно использовать:
-— проверенные факты;
-— точные или ориентировочные цифры;
-— реальные примеры.
-
-Обязательно упоминать:
-— актуальные данные;
-— события;
-— изменения и тренды.
-
-Каждый абзац обязан нести практическую пользу.
-
-Добавлять:
-— практические советы;
-— мини-разборы;
-— последствия решений.
-
-Вода полностью запрещена.
-
-❌ Запрещённые примеры:
-«Футбол — очень популярный вид спорта…»
-«Это было величественно и незабываемо…»
-«Это не просто гонки, а нечто большее…»
-«Он показал, что такое настоящий характер…»
-
-6. Анти-ИИ требования
-
-Избегать:
-— одинаковых ритмов предложений;
-— повторяющихся начальных конструкций;
-— шаблонных связок.
-
-Текст должен выглядеть как редакторская аналитика с опытом, а не как генерация.
-
-7. Язык, стиль и подача
-
-Язык: естественный, живой, русский.
-Пояснять так, как для новичка, но без упрощённого примитивизма.
-
-Тон:
-— уверенный;
-— экспертный;
-— спокойный;
-— без заигрывания.
-
-Стиль:
-— аналитический;
-— информативный;
-— редакторский.
-
-Избегать повторов слов.
-
-8. Жёсткие стилистические запреты
-
-Сравнения — не более 1–2 раз за весь текст.
-Минимизировать тире.
-Запрещены конструкции:
-«Спорт — это…»
-
-Запрещено:
-— говорить о заработке на ставках;
-— обещать прибыль, доход, деньги;
-— писать как подросток;
-— писать как мотиватор;
-— писать как рекламный текст.
-
-9. Финальный контроль качества
-
-Перед сдачей текста проверь:
-— нет воды;
-— нет пафоса;
-— нет обещаний заработка;
-— есть факты, цифры, логика;
-— есть таблица и список;
-— нет нейросетевых штампов;
-— текст читается как профессиональная редакторская аналитика.
-
-10. Формат ответа (строго)
-
-Верни ответ строго в формате JSON-объекта со следующими полями верхнего уровня:
-
-- "title": строка — H1 статьи (без HTML-тегов), будет использован как заголовок записи в WordPress.
-- "meta_title": строка — SEO Title
-- "meta_description": строка — SEO Description
-- "slug": строка — человекопонятный URL-слиз (латиницей, через дефисы, без пробелов и спецсимволов)
-- "content_html": строка — ПОЛНЫЙ HTML-код статьи без <html>, <head>, <body>, НО:
-    * СТРОГО БЕЗ тега <h1> внутри контента.
-    * Допускаются только <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <td>.
-    * без <hr> и любых линий-разделителей.
-- "image_prompt": строка — подробное текстовое описание картинки 1280x720 (16:9), без текста на изображении, для WebP до 100 КБ.
-
-Никакого текста вне JSON.
-"""
+BASE_PROMPT_TEMPLATE = load_prompt_template()
 
 
 def build_system_prompt(topic: str, prompt_profile: str) -> str:
@@ -331,7 +218,7 @@ def generate_article(
         print(f"[DEBUG] Попытка генерации текста #{attempt} для темы: {topic!r}")
 
         response = client.chat.completions.create(
-            model="gpt-5.1",
+            model="gpt-5.2",
             response_format={"type": "json_object"},
             temperature=0.55,
             messages=[
@@ -507,12 +394,37 @@ def create_post(
     if media_id:
         payload["featured_media"] = media_id
 
-    # SEO-плагин Rank Math
-    seo_plugin = cfg.get("seo_plugin")
+    # SEO-плагин: автоматически определяем установленный плагин
+    print(f"[DEBUG] Определение установленного SEO плагина для сайта '{site_key}'...")
+    seo_plugin = detect_seo_plugin(site_key)
+    print(f"[DEBUG] Определён SEO плагин: {seo_plugin}")
+    
+    meta = payload.setdefault("meta", {})
+    
     if seo_plugin == "rankmath":
-        meta = payload.setdefault("meta", {})
-        meta["rank_math_title"] = article["meta_title"]
-        meta["rank_math_description"] = article["meta_description"]
+        # Rank Math SEO
+        meta["rank_math_title"] = article.get("meta_title", "")
+        meta["rank_math_description"] = article.get("meta_description", "")
+        print(f"[DEBUG] Применяются настройки Rank Math")
+        print(f"[DEBUG]   title: {meta['rank_math_title'][:50]}...")
+        print(f"[DEBUG]   description: {meta['rank_math_description'][:50]}...")
+    elif seo_plugin == "yoast":
+        # Yoast SEO
+        meta["_yoast_wpseo_title"] = article.get("meta_title", "")
+        meta["_yoast_wpseo_metadesc"] = article.get("meta_description", "")
+        print(f"[DEBUG] Применяются настройки Yoast SEO")
+        print(f"[DEBUG]   title: {meta['_yoast_wpseo_title'][:50]}...")
+        print(f"[DEBUG]   description: {meta['_yoast_wpseo_metadesc'][:50]}...")
+    elif seo_plugin == "both":
+        # Оба плагина установлены - применяем настройки для обоих
+        meta["rank_math_title"] = article.get("meta_title", "")
+        meta["rank_math_description"] = article.get("meta_description", "")
+        meta["_yoast_wpseo_title"] = article.get("meta_title", "")
+        meta["_yoast_wpseo_metadesc"] = article.get("meta_description", "")
+        print(f"[DEBUG] Применяются настройки для обоих плагинов (Rank Math + Yoast SEO)")
+    else:
+        print(f"[WARN] SEO плагин не определён или не установлен (определено: '{seo_plugin}')")
+        print(f"[WARN] SEO метаданные не будут применены. Установите Rank Math или Yoast SEO.")
 
     resp = requests.post(
         endpoint,
